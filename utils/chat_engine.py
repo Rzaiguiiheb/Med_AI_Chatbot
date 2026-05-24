@@ -56,14 +56,24 @@ class MedicalChatEngine:
     def __init__(self, role: str = "patient", model: str = "llama3.2"):
         self.role = role
         self.model = model
+
+        #If role = "doctor", it goes into the dictionary, grabs the long doctor prompt, 
+        # and assigns it to self.system_prompt. 
+        # If role = "patient", it grabs the patient prompt.
+
         self.system_prompt = SYSTEM_PROMPTS.get(role, SYSTEM_PROMPTS["patient"])
-        #initialize the Ollama chat model with specified parameters. The base_url points to the local Ollama server, and the temperature is set to 0.3 for more focused responses, which is important in a medical context to ensure accuracy and consistency.
+
+
+        #initialize the Ollama chat model with specified parameters. 
+        # temperature is set to 0.3 for more focused responses, 
+        # which is important in a medical context to ensure accuracy and consistency.
+
         self.llm = ChatOllama(
             model=self.model,
             temperature=0.3, 
             base_url="http://localhost:11434",
         )
-        
+
 #This method constructs the message history for the chat. It starts with the system prompt to set the context, 
 # then adds the conversation history (up to the last 20 messages) and finally appends the current user message.
 
@@ -78,6 +88,10 @@ class MedicalChatEngine:
             elif msg["role"] == "assistant":
                 messages.append(AIMessage(content=msg["content"]))
 
+#If the message was from the user, it labels it a HumanMessage.
+# If the message was from the AI, it labels it an AIMessage.
+
+        #The New Input: The User’s Message
         messages.append(HumanMessage(content=user_message))
         return messages
     
@@ -110,5 +124,24 @@ class MedicalChatEngine:
                 yield chunk.content
         except Exception as e:
             yield f"⚠️ Error: {str(e)}"
+
+
+
+#Structure of the messages:
+#messages = [
+    # 1. THE SYSTEM PROMPT (Always index 0)
+    #SystemMessage(content="You are MedAI, a compassionate and knowledgeable medical assistant..."),
+
+    # 2. THE HISTORICAL BACK-AND-FORTH (Up to 20 messages maximum)
+    #HumanMessage(content="Hello, my stomach hurts."),
+    #AIMessage(content="I'm sorry to hear that. Where exactly does it hurt, and for how long?"),
+    #HumanMessage(content="It's near the upper middle part, started this morning."),
+    #AIMessage(content="Upper central pain can be linked to indigestion or acid reflux..."),
+    
+    # ... more history objects can sit here ...
+
+    # 3. THE BRAND NEW USER MESSAGE (Always the very last item)
+    #HumanMessage(content="I also feel slightly nauseous now.")
+
 
     
