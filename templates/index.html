@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MedAI — Medical Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+<!-- ONBOARDING OVERLAY -->
+<div id="onboarding" class="onboarding-overlay">
+  <div class="onboarding-card">
+    <div class="onboard-logo">
+      <div class="logo-pulse"></div>
+      <svg viewBox="0 0 40 40" width="48" height="48" fill="none">
+        <circle cx="20" cy="20" r="19" stroke="var(--accent)" stroke-width="1.5"/>
+        <path d="M20 10v20M10 20h20" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="20" cy="20" r="5" fill="var(--accent)" opacity="0.2"/>
+      </svg>
+      <span class="logo-text">MedAI</span>
+    </div>
+    <h1>Your Medical Assistant</h1>
+    <p class="onboard-subtitle">Powered by local AI — your data stays private</p>
+    
+    <div class="role-section">
+      <label class="form-label">Who are you?</label>
+      <div class="role-cards">
+        <div class="role-card active" data-role="patient">
+          <div class="role-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="role-info">
+            <strong>Patient</strong>
+            <small>Health questions in plain language</small>
+          </div>
+        </div>
+        <div class="role-card" data-role="doctor">
+          <div class="role-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M9 12h6M12 9v6M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/>
+            </svg>
+          </div>
+          <div class="role-info">
+            <strong>Doctor / Clinician</strong>
+            <small>Clinical support & guidelines</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="name-section">
+      <label class="form-label" for="userName">Your name (optional)</label>
+      <input type="text" id="userName" class="form-input" placeholder="Dr. Smith or Jane...">
+    </div>
+
+    <div class="disclaimer-box">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+      </svg>
+      <span>MedAI is not a substitute for professional medical advice. Always consult a qualified healthcare provider.</span>
+    </div>
+
+    <button class="btn-start" id="startBtn" onclick="startSession()">
+      Start Conversation
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M5 12h14M12 5l7 7-7 7"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" class="app hidden">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <svg viewBox="0 0 40 40" width="32" height="32" fill="none">
+          <circle cx="20" cy="20" r="19" stroke="var(--accent)" stroke-width="1.5"/>
+          <path d="M20 10v20M10 20h20" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <span>MedAI</span>
+      </div>
+    </div>
+
+    <div class="user-badge" id="userBadge">
+      <div class="user-avatar" id="sidebarAvatar"></div>
+      <div class="user-meta">
+        <span class="user-name" id="sidebarName">User</span>
+        <span class="user-role" id="sidebarRole">Patient</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <span class="sidebar-label">Quick Prompts</span>
+      <div class="quick-prompts" id="quickPrompts"></div>
+    </div>
+
+    <div class="sidebar-section sidebar-bottom">
+      <button class="sidebar-btn" onclick="clearHistory()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>
+        Clear conversation
+      </button>
+      <button class="sidebar-btn" onclick="openSettings()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 0-14.14 0M4.93 19.07a10 10 0 0 0 14.14 0"/>
+        </svg>
+        Settings
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <div class="topbar-title">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="topbarTitle">Medical Assistant</span>
+      </div>
+      <div class="topbar-badge" id="roleBadge">Patient</div>
+    </header>
+
+    <!-- MESSAGES -->
+    <section class="messages-area" id="messagesArea">
+      <div class="welcome-block" id="welcomeBlock">
+        <div class="welcome-icon">
+          <svg viewBox="0 0 60 60" width="60" height="60" fill="none">
+            <circle cx="30" cy="30" r="29" stroke="var(--accent)" stroke-width="1.2" opacity="0.4"/>
+            <circle cx="30" cy="30" r="20" stroke="var(--accent)" stroke-width="1" opacity="0.2"/>
+            <path d="M30 18v24M18 30h24" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 id="welcomeTitle">Hello there!</h2>
+        <p id="welcomeText">Ask me anything about health, symptoms, medications, or medical conditions. I'm here to help.</p>
+        <div class="example-chips" id="exampleChips"></div>
+      </div>
+    </section>
+
+    <!-- INPUT AREA -->
+    <footer class="input-area">
+      <div class="input-wrapper">
+        <textarea 
+          id="messageInput" 
+          class="message-textarea" 
+          placeholder="Ask a medical question..."
+          rows="1"
+          onkeydown="handleKeyDown(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <div class="input-actions">
+          <span class="char-count" id="charCount">0</span>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="input-footer">
+        <span>MedAI may make mistakes — always verify with a healthcare professional</span>
+        <span id="modelTag">llama3.2 · local</span>
+      </div>
+    </footer>
+
+  </main>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settingsModal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Settings</h3>
+      <button onclick="closeSettings()" class="modal-close">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="setting-row">
+        <label>Ollama Model</label>
+        <select id="modelSelect" class="form-select">
+          <option value="llama3.2">llama3.2 (default)</option>
+          <option value="llama3.1">llama3.1</option>
+          <option value="mistral">mistral</option>
+          <option value="meditron">meditron (medical)</option>
+          <option value="gemma2">gemma2</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <label>Theme</label>
+        <div class="theme-toggle">
+          <button class="theme-btn active" onclick="setTheme('dark', this)">Dark</button>
+          <button class="theme-btn" onclick="setTheme('light', this)">Light</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <label>Switch Role</label>
+        <button class="btn-role-switch" onclick="resetSession()">Change Role / User</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
